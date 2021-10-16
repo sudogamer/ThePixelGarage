@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <Windows.h>
+#include "Utils/include/factoryUtils/SudoApp.h"
 
 int CALLBACK WinMain(
 	HINSTANCE hInstance,
@@ -8,5 +7,21 @@ int CALLBACK WinMain(
 	int       nCmdShow)
 {
 
+	try
+	{
+		return SudoApp{}.Go();
+	}
+	catch (const SudoException& e)
+	{
+		MessageBox(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);
+	}
+	catch (const std::exception& e)
+	{
+		MessageBox(nullptr, e.what(), "Standard Exception", MB_OK | MB_ICONEXCLAMATION);
+	}
+	catch (...)
+	{
+		MessageBox(nullptr, "No details available", "Unknown Exception", MB_OK | MB_ICONEXCLAMATION);
+	}
 	return -1;
 }

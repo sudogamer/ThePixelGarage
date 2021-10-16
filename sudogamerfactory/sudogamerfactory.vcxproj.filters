@@ -13,10 +13,122 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="FactoryUtilHeaders">
+      <UniqueIdentifier>{eee23cad-3878-4414-8288-3488d126b1b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FactoryUtilSource">
+      <UniqueIdentifier>{8b79c161-3753-4cf8-a523-6a76693988ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{099ad6ec-7708-4944-8db1-d90e4b883b10}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\WindowsMessageMap.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\Mouse.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\Window.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\Keyboard.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\DxgiInfoManager.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\dxerr.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\SudoTimer.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\SudoApp.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\SudoException.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\SudoGraphics.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\include\factoryUtils\d3dUtil.cpp">
+      <Filter>FactoryUtilSource</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Utils\include\factoryUtils\dxerr.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\DxgiInfoManager.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\Keyboard.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\Mouse.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\SudoApp.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\SudoException.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\SudoTimer.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\SudoWin.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\Window.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\WindowsMessageMap.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\SudoGraphics.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\factoryUtils\d3dUtil.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\include\D3DHeaders.h">
+      <Filter>FactoryUtilHeaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Utils\include\factoryUtils\DXGetErrorString.inl">
+      <Filter>FactoryUtilHeaders</Filter>
+    </None>
+    <None Include="Utils\include\factoryUtils\DXTrace.inl">
+      <Filter>FactoryUtilHeaders</Filter>
+    </None>
+    <None Include="Utils\include\factoryUtils\DXGetErrorDescription.inl">
+      <Filter>FactoryUtilHeaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Utils\include\factoryUtils\halloween.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Utils\include\factoryUtils\sudogamer.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Utils\shaders\PixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Utils\shaders\VertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
