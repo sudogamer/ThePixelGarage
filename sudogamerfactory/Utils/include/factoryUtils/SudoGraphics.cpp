@@ -72,8 +72,24 @@ SudoGraphics::SudoGraphics( HWND hWnd )
 	wrl::ComPtr<ID3D11Resource> pBackBuffer;
 	GFX_THROW_INFO( pSwap->GetBuffer( 0,__uuidof(ID3D11Resource),&pBackBuffer ) );
 	GFX_THROW_INFO( pDevice->CreateRenderTargetView( pBackBuffer.Get(),nullptr,&pTarget ) );
-}
 
+	//set Rasterizer state
+	D3D11_RASTERIZER_DESC rasterDesc = {};
+	rasterDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
+	rasterDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;
+	rasterDesc.FrontCounterClockwise = TRUE;
+	rasterDesc.DepthBias = 1.0f;
+	rasterDesc.DepthBiasClamp = 1.0f;
+	rasterDesc.SlopeScaledDepthBias = 1.0f;
+	rasterDesc.DepthClipEnable = TRUE;
+	rasterDesc.ScissorEnable = FALSE;
+	rasterDesc.MultisampleEnable = TRUE;
+	rasterDesc.AntialiasedLineEnable = TRUE;
+
+	GFX_THROW_INFO(pDevice->CreateRasterizerState(&rasterDesc,&pRasterizerState));
+	pContext->RSSetState(pRasterizerState.Get());
+}
+ 
 void SudoGraphics::EndFrame()
 {
 	HRESULT hr;
@@ -122,12 +138,15 @@ void SudoGraphics::DrawTestTriangle()
 	// create vertex buffer (1 2d triangle at center of screen)
 	Vertex vertices[] =
 	{
-		{ 0.0f,0.5f,255,0,0,0 },
-		{ 0.5f,-0.5f,0,255,0,0 },
-		{ -0.5f,-0.5f,0,0,255,0 },
-		{ -0.3f,0.3f,0,255,0,0 },
-		{ 0.3f,0.3f,0,0,255,0 },
-		{ 0.0f,-0.8f,255,0,0,0 },
+		//{ 0.0f,0.5f,255,0,0,0 },
+		//{ 0.5f,-0.5f,0,255,0,0 },
+		//{ -0.5f,-0.5f,0,0,255,0 },
+		//{ -0.3f,0.3f,0,255,0,0 },
+		//{ 0.3f,0.3f,0,0,255,0 },
+		//{ 0.0f,-0.8f,255,0,0,0 },
+		{-0.5f, -0.5f, 255,255,255,255},
+		{0.5f, -0.5f, 255,255,255,255},
+		{0.0f,  0.5f, 255,255,255,255}
 	};
 	vertices[0].color.g = 255;
 	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
@@ -151,10 +170,10 @@ void SudoGraphics::DrawTestTriangle()
 	// create index buffer
 	const unsigned short indices[] =
 	{
-		0,1,2,
-		0,2,3,
+		0,1,2
+		/*0,2,3,
 		0,4,1,
-		2,1,5,
+		2,1,5,*/
 	};
 	wrl::ComPtr<ID3D11Buffer> pIndexBuffer;
 	D3D11_BUFFER_DESC ibd = {};
@@ -215,6 +234,8 @@ void SudoGraphics::DrawTestTriangle()
 
 	// Set primitive topology to triangle list (groups of 3 vertices)
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	
 
 
 	// configure viewport
