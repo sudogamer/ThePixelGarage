@@ -21,7 +21,7 @@ int SudoApp::Go()
 
 void SudoApp::DoFrame()
 {
-	const double c = sin( timer.Peek() ) / 2.0f + 0.5f;
+	const float c = sin( timer.Peek() ) / 2.0f + 0.5f;
 	wnd.Gfx().ClearBuffer( c,c,1.0f );
 	wnd.Gfx().Draw();
 	wnd.Gfx().EndFrame();
