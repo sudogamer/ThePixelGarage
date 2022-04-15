@@ -19,14 +19,8 @@
     <Filter Include="FactoryUtilSource">
       <UniqueIdentifier>{8b79c161-3753-4cf8-a523-6a76693988ce}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders">
-      <UniqueIdentifier>{099ad6ec-7708-4944-8db1-d90e4b883b10}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utils\include\factoryUtils\WindowsMessageMap.cpp">
       <Filter>FactoryUtilSource</Filter>
     </ClCompile>
@@ -46,9 +40,6 @@
       <Filter>FactoryUtilSource</Filter>
     </ClCompile>
     <ClCompile Include="Utils\include\factoryUtils\SudoTimer.cpp">
-      <Filter>FactoryUtilSource</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\include\factoryUtils\SudoApp.cpp">
       <Filter>FactoryUtilSource</Filter>
     </ClCompile>
     <ClCompile Include="Utils\include\factoryUtils\SudoException.cpp">
@@ -72,9 +63,6 @@
       <Filter>FactoryUtilHeaders</Filter>
     </ClInclude>
     <ClInclude Include="Utils\include\factoryUtils\Mouse.h">
-      <Filter>FactoryUtilHeaders</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\include\factoryUtils\SudoApp.h">
       <Filter>FactoryUtilHeaders</Filter>
     </ClInclude>
     <ClInclude Include="Utils\include\factoryUtils\SudoException.h">
@@ -122,13 +110,5 @@
     <ResourceCompile Include="Utils\include\factoryUtils\sudogamer.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Utils\shaders\PixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Utils\shaders\VertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
   </ItemGroup>
 </Project>

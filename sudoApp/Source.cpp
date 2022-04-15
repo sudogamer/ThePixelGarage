@@ -1,5 +1,5 @@
-#include "Utils/include/factoryUtils/SudoApp.h"
-
+#include "header/SudoApp.h"
+#include <tchar.h>
 int CALLBACK WinMain(
 	HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,

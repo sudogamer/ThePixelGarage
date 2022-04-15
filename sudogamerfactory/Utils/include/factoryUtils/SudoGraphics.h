@@ -119,7 +119,7 @@ protected :
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 	void CreateRtvAndDsvDescriptorHeaps();
-	void OnResize();
+	void InitialiseRenderingResources();
 
 	ID3D12Resource* GetCurrentBackBuffer()const
 	{

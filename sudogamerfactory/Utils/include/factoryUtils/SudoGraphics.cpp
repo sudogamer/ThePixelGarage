@@ -27,7 +27,7 @@ SudoGraphics::SudoGraphics( HWND hWnd )
 
 	// Do the initial rendertarget view and depthrendertarget view setup.
 	//Setup screen viewport and scissors
-	OnResize();
+	InitialiseRenderingResources();
 }
  
 void SudoGraphics::EndFrame()
@@ -67,7 +67,7 @@ void SudoGraphics::Draw()
 {
 	HRESULT hr;
 	// Reuse the memory associated with command recording.
-// We can only reset when the associated command lists have finished execution on the GPU.
+	// We can only reset when the associated command lists have finished execution on the GPU.
 	GFX_THROW_INFO(mCommandAllocator->Reset());
 
 	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
@@ -86,7 +86,7 @@ void SudoGraphics::Draw()
 	mCommandListGraphics->RSSetScissorRects(1, &mScissorRect);
 
 	// Clear the back buffer and depth buffer.
-	mCommandListGraphics->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+	mCommandListGraphics->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::CadetBlue, 0, nullptr);
 	mCommandListGraphics->ClearDepthStencilView(GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	// Specify the buffers we are going to render to.
@@ -299,7 +299,8 @@ void SudoGraphics::CreateRtvAndDsvDescriptorHeaps()
 	GFX_THROW_INFO(md3dDevice->CreateDescriptorHeap(
 		&dsvHeapDesc, IID_PPV_ARGS(mDepthStencilTargetViewHeap.GetAddressOf())));
 }
-void SudoGraphics::OnResize()
+
+void SudoGraphics::InitialiseRenderingResources()
 {
 	HRESULT hr;
 	assert(md3dDevice);
@@ -401,6 +402,7 @@ void SudoGraphics::OnResize()
 
 	mScissorRect = { 0, 0, mScreenWidth, mScreenHeight };
 }
+
 void SudoGraphics::CreateCommandObjects()
 {
 	HRESULT hr;
@@ -468,7 +470,8 @@ void SudoGraphics::FlushCommandQueue()
 	GFX_THROW_INFO(mCommandQueue->Signal(mFence.Get(), mCurrentFence));
 
 	// Wait until the GPU has completed commands up to this fence point.
-	if (mFence->GetCompletedValue() < mCurrentFence)
+	UINT64 completedValue = mFence->GetCompletedValue();
+	if (completedValue < mCurrentFence)
 	{
 		HANDLE eventHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 

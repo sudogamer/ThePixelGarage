@@ -1,6 +1,6 @@
 #pragma once
-#include "Window.h"
-#include "SudoTimer.h"
+#include "factoryUtils/Window.h"
+#include "factoryUtils/SudoTimer.h"
 
 class SudoApp
 {
