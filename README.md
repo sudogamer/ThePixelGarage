@@ -1,13 +1,14 @@
 # The Pixel Garage(WIP!)
 
 A simple experimental Toy 3D Graphics engine with an idea to have multiple backend (API) / platform support initially starting with Vulka, D3D12 for Windows using C/C++. 
-WIP for the initial planned features :
-*D3D12 & Vulkan backend which is the key to its design is the integration of multiple backend APIs
-*IMGUI for user interface rendering, ensuring a flexible and easy-to-use interface for developers
-*Basic Ray Tracing Techniques: Implementation of ray tracing for shadows, ambient occlusion (AO), and reflections/lighting effects, contributing to advanced visual fidelity.
-*Deferred rendering.
-*Basic Bling Phong lighting
-*GLTF model loading
+
+#WIP for the initial planned features :
+* D3D12 & Vulkan backend which is the key to its design is the integration of multiple backend APIs
+* IMGUI for user interface rendering, ensuring a flexible and easy-to-use interface for developers
+* Basic Ray Tracing Techniques: Implementation of ray tracing for shadows, ambient occlusion (AO), and reflections/lighting effects, contributing to advanced visual fidelity.
+* Deferred rendering.
+* Basic Bling Phong lighting
+* GLTF model loading
 
 #Roadmap features
 * Scene/Framegraph : An organized structure for managing scenes and rendering sequences / passes
