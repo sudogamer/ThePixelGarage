@@ -1,12 +1,30 @@
-#pragma once
-#include <chrono>
+#ifndef SUDOTIMER_H
+#define SUDOTIMER_H
 
 class SudoTimer
 {
 public:
-	SudoTimer() noexcept;
-	float Mark() noexcept;
-	float Peek() const noexcept;
+	SudoTimer();
+
+	float TotalTime()const; // in seconds
+	float DeltaTime()const; // in seconds
+
+	void Reset(); // Call before message loop.
+	void Start(); // Call when unpaused.
+	void Stop();  // Call when paused.
+	void Tick();  // Call every frame.
+
 private:
-	std::chrono::steady_clock::time_point last;
+	double mSecondsPerCount;
+	double mDeltaTime;
+
+	__int64 mBaseTime;
+	__int64 mPausedTime;
+	__int64 mStopTime;
+	__int64 mPrevTime;
+	__int64 mCurrTime;
+
+	bool mStopped;
 };
+
+#endif // SudoTimer_H

@@ -1,43 +1,27 @@
-#include "SudoGraphics.h"
+#include "..\..\..\common\SudoGraphicsCore.h"
 #include "dxerr.h"
 namespace wrl = Microsoft::WRL;
 
-// graphics exception checking/throwing macros (some with dxgi infos)
-#define GFX_EXCEPT_NOINFO(hr) SudoGraphics::HrException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw SudoGraphics::HrException( __LINE__,__FILE__,hr )
 
-#ifndef NDEBUG
-#define GFX_EXCEPT(hr) SudoGraphics::HrException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
-#define GFX_THROW_INFO(hrcall) infoManager.Set(); if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr)
-#define GFX_DEVICE_REMOVED_EXCEPT(hr) SudoGraphics::DeviceRemovedException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
-#define GFX_THROW_INFO_ONLY(call) infoManager.Set(); (call); {auto v = infoManager.GetMessages(); if(!v.empty()) {throw SudoGraphics::InfoException( __LINE__,__FILE__,v);}}
-#else
-#define GFX_EXCEPT(hr) SudoGraphics::HrException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_INFO(hrcall) GFX_THROW_NOINFO(hrcall)
-#define GFX_DEVICE_REMOVED_EXCEPT(hr) SudoGraphics::DeviceRemovedException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_INFO_ONLY(call) (call)
-#endif
-
-
-SudoGraphics::SudoGraphics( HWND hWnd )
+void SudoGraphicsCore::InitializeSudoGraphicsCore(HWND hWnd, unsigned int wndWidth, unsigned int wndHeight)
 {
-	this->hWnd = hWnd;
-
+	this->mhMainWnd = hWnd;
+	this->wndWidth = wndWidth;
+	this->wndHeight = wndHeight;
+	mCurrentFence = 0;
 	InitDirect3D12();
 
-	// Do the initial rendertarget view and depthrendertarget view setup.
-	//Setup screen viewport and scissors
-	InitialiseRenderingResources();
+	// Do the initial resize code.
+	OnResize();
 }
- 
-void SudoGraphics::EndFrame()
+void SudoGraphicsCore::EndFrame()
 {
 	HRESULT hr;
 #ifndef NDEBUG
 	infoManager.Set();
 #endif
 	// swap the back and front buffers
-	if( FAILED( hr = mSwapChain->Present( 1u,0u ) ) )
+	if( FAILED( hr = mSwapChain->Present( 0,0 ) ) )
 	{
 		if( hr == DXGI_ERROR_DEVICE_REMOVED )
 		{
@@ -57,13 +41,11 @@ void SudoGraphics::EndFrame()
 	}
 }
 
-void SudoGraphics::ClearBuffer( float red,float green,float blue ) noexcept
+void SudoGraphicsCore::Draw(const SudoTimer& gt)
 {
-	/*const float color[] = { red,green,blue,1.0f };
-	mCommandListGraphics->ClearRenderTargetView( pTarget.Get(),color );*/
-}
 
-void SudoGraphics::Draw()
+}
+/*void SudoGraphicsCore::Draw(const SudoTimer& gt)
 {
 	HRESULT hr;
 	// Reuse the memory associated with command recording.
@@ -73,6 +55,9 @@ void SudoGraphics::Draw()
 	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
 	// Reusing the command list reuses memory.
 	GFX_THROW_INFO(mCommandListGraphics->Reset(mCommandAllocator.Get(), nullptr));
+
+	//Reset viewport and scissor
+	ResetViewportAndScissorRectangle();
 
 	// Indicate a state transition on the resource usage.
 	ID3D12Resource* currentRenderTarget = GetCurrentBackBuffer();
@@ -85,8 +70,9 @@ void SudoGraphics::Draw()
 	mCommandListGraphics->RSSetViewports(1, &mScreenViewport);
 	mCommandListGraphics->RSSetScissorRects(1, &mScissorRect);
 
+	const float clearColor[] = { 1.0f, 0.2f, 0.4f, 1.0f };
 	// Clear the back buffer and depth buffer.
-	mCommandListGraphics->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::CadetBlue, 0, nullptr);
+	mCommandListGraphics->ClearRenderTargetView(CurrentBackBufferView(), clearColor, 0, nullptr);
 	mCommandListGraphics->ClearDepthStencilView(GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	// Specify the buffers we are going to render to.
@@ -108,9 +94,9 @@ void SudoGraphics::Draw()
 	ID3D12CommandList* cmdsLists[] = { mCommandListGraphics.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 }
-
-// SudoGraphics exception stuff
-SudoGraphics::HrException::HrException( int line,const char * file,HRESULT hr,std::vector<std::string> infoMsgs ) noexcept
+*/
+// SudoGraphicsCore exception stuff
+SudoGraphicsCore::HrException::HrException( int line,const char * file,HRESULT hr,std::vector<std::string> infoMsgs ) noexcept
 	:
 	Exception( line,file ),
 	hr( hr )
@@ -128,7 +114,7 @@ SudoGraphics::HrException::HrException( int line,const char * file,HRESULT hr,st
 	}
 }
 
-const char* SudoGraphics::HrException::what() const noexcept
+const char* SudoGraphicsCore::HrException::what() const noexcept
 {
 	std::ostringstream oss;
 	oss << GetType() << std::endl
@@ -145,38 +131,39 @@ const char* SudoGraphics::HrException::what() const noexcept
 	return whatBuffer.c_str();
 }
 
-const char* SudoGraphics::HrException::GetType() const noexcept
+const char* SudoGraphicsCore::HrException::GetType() const noexcept
 {
-	return "SudoGamer SudoGraphics Exception";
+	return "SudoGamer SudoGraphicsCore Exception";
 }
 
-HRESULT SudoGraphics::HrException::GetErrorCode() const noexcept
+HRESULT SudoGraphicsCore::HrException::GetErrorCode() const noexcept
 {
 	return hr;
 }
 
-std::string SudoGraphics::HrException::GetErrorString() const noexcept
+std::string SudoGraphicsCore::HrException::GetErrorString() const noexcept
 {
 	return DXGetErrorString( hr );
 }
 
-std::string SudoGraphics::HrException::GetErrorDescription() const noexcept
+std::string SudoGraphicsCore::HrException::GetErrorDescription() const noexcept
 {
 	char buf[512];
 	DXGetErrorDescription( hr,buf,sizeof( buf ) );
 	return buf;
 }
 
-std::string SudoGraphics::HrException::GetErrorInfo() const noexcept
+std::string SudoGraphicsCore::HrException::GetErrorInfo() const noexcept
 {
 	return info;
 }
 
-const char* SudoGraphics::DeviceRemovedException::GetType() const noexcept
+const char* SudoGraphicsCore::DeviceRemovedException::GetType() const noexcept
 {
-	return "SudoGamer SudoGraphics Exception [Device Removed] (DXGI_ERROR_DEVICE_REMOVED)";
+	return "SudoGamer SudoGraphicsCore Exception [Device Removed] (DXGI_ERROR_DEVICE_REMOVED)";
 }
-SudoGraphics::InfoException::InfoException( int line,const char * file,std::vector<std::string> infoMsgs ) noexcept
+
+SudoGraphicsCore::InfoException::InfoException( int line,const char * file,std::vector<std::string> infoMsgs ) noexcept
 	:
 	Exception( line,file )
 {
@@ -193,7 +180,7 @@ SudoGraphics::InfoException::InfoException( int line,const char * file,std::vect
 	}
 }
 
-const char* SudoGraphics::InfoException::what() const noexcept
+const char* SudoGraphicsCore::InfoException::what() const noexcept
 {
 	std::ostringstream oss;
 	oss << GetType() << std::endl
@@ -203,17 +190,17 @@ const char* SudoGraphics::InfoException::what() const noexcept
 	return whatBuffer.c_str();
 }
 
-const char* SudoGraphics::InfoException::GetType() const noexcept
+const char* SudoGraphicsCore::InfoException::GetType() const noexcept
 {
-	return "SudoGamer SudoGraphics Info Exception";
+	return "SudoGamer SudoGraphicsCore Info Exception";
 }
 
-std::string SudoGraphics::InfoException::GetErrorInfo() const noexcept
+std::string SudoGraphicsCore::InfoException::GetErrorInfo() const noexcept
 {
 	return info;
 }
 
-bool SudoGraphics::InitDirect3D12()
+bool SudoGraphicsCore::InitDirect3D12()
 {
 	HRESULT hr;
 #if defined(DEBUG) || defined(_DEBUG) 
@@ -224,9 +211,12 @@ bool SudoGraphics::InitDirect3D12()
 		debugController->EnableDebugLayer();
 	}
 #endif
+	//DXGI Factory object to handle full screen transitions, creation of swapchain
+	//enumerate and find your adapter(GPU)
 	GFX_THROW_INFO(CreateDXGIFactory1(IID_PPV_ARGS(&mdxgiFactory)));
 
 	// Try to create hardware device.
+	// Device is required for creations and management of resources (buffers, shaders)
 	HRESULT hardwareResult = D3D12CreateDevice(
 		nullptr,             // default adapter
 		D3D_FEATURE_LEVEL_11_0,
@@ -244,6 +234,7 @@ bool SudoGraphics::InitDirect3D12()
 			IID_PPV_ARGS(&md3dDevice)));
 	}
 
+	//Create fence object for CPU - GPU synchronisation 
 	GFX_THROW_INFO(md3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE,
 		IID_PPV_ARGS(&mFence)));
 
@@ -257,7 +248,7 @@ bool SudoGraphics::InitDirect3D12()
 
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
 	msQualityLevels.Format = mRenderTargetFormat;
-	msQualityLevels.SampleCount = 4;
+	msQualityLevels.SampleCount = 1;
 	msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
 	msQualityLevels.NumQualityLevels = 0;
 	GFX_THROW_INFO(md3dDevice->CheckFeatureSupport(
@@ -268,6 +259,8 @@ bool SudoGraphics::InitDirect3D12()
 	m4xMsaaQuality = msQualityLevels.NumQualityLevels;
 	assert(m4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
 
+//Enumerate through all the available adapters and fetch the currently active adapter
+//logs it to immediate window
 #ifdef _DEBUG
 	LogAdapters();
 #endif
@@ -275,11 +268,51 @@ bool SudoGraphics::InitDirect3D12()
 	CreateCommandObjects();
 	CreateSwapChain();
 	CreateRtvAndDsvDescriptorHeaps();
-
 	return true;
 }
 
-void SudoGraphics::CreateRtvAndDsvDescriptorHeaps()
+SudoGraphicsCore::~SudoGraphicsCore()
+{
+	if (md3dDevice != nullptr)
+		FlushCommandQueue();
+}
+
+void SudoGraphicsCore::Update(const SudoTimer& gt)
+{
+}
+
+void SudoGraphicsCore::SetClearColor(float color[])
+{
+	memcpy(clearColor, color, sizeof(float)*4);
+}
+
+void SudoGraphicsCore::CalculateFrameStats(std::string* fps, std::string* frameTime)
+{
+	// Code computes the average frames per second, and also the 
+	// average time it takes to render one frame.  These stats 
+	// are appended to the window caption bar.
+
+	static int frameCnt = 0;
+	static float timeElapsed = 0.0f;
+
+	frameCnt++;
+
+	// Compute averages over one second period.
+	if ((mTimer.TotalTime() - timeElapsed) >= 1.0f)
+	{
+		float currFps = (float)frameCnt; // fps = frameCnt / 1
+		float mspf = 1000.0f / currFps;
+
+		*fps = std::to_string(currFps);
+		*frameTime = std::to_string(mspf);
+
+		// Reset for next average.
+		frameCnt = 0;
+		timeElapsed += 1.0f;
+	}
+}
+
+void SudoGraphicsCore::CreateRtvAndDsvDescriptorHeaps()
 {
 	HRESULT hr;
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
@@ -300,7 +333,7 @@ void SudoGraphics::CreateRtvAndDsvDescriptorHeaps()
 		&dsvHeapDesc, IID_PPV_ARGS(mDepthStencilTargetViewHeap.GetAddressOf())));
 }
 
-void SudoGraphics::InitialiseRenderingResources()
+void SudoGraphicsCore::OnResize()
 {
 	HRESULT hr;
 	assert(md3dDevice);
@@ -320,7 +353,7 @@ void SudoGraphics::InitialiseRenderingResources()
 	// Resize the swap chain.
 	GFX_THROW_INFO(mSwapChain->ResizeBuffers(
 		SWAPCHAINBUFFERCOUNT,
-		mScreenWidth, mScreenHeight,
+		wndWidth, wndHeight,
 		mRenderTargetFormat,
 		DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
@@ -338,18 +371,11 @@ void SudoGraphics::InitialiseRenderingResources()
 	D3D12_RESOURCE_DESC depthStencilDesc;
 	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	depthStencilDesc.Alignment = 0;
-	depthStencilDesc.Width = mScreenWidth;
-	depthStencilDesc.Height = mScreenHeight;
+	depthStencilDesc.Width = wndWidth;
+	depthStencilDesc.Height = wndHeight;
 	depthStencilDesc.DepthOrArraySize = 1;
 	depthStencilDesc.MipLevels = 1;
-
-	// Correction 11/12/2016: SSAO chapter requires an SRV to the depth buffer to read from 
-	// the depth buffer.  Therefore, because we need to create two views to the same resource:
-	//   1. SRV format: DXGI_FORMAT_R24_UNORM_X8_TYPELESS
-	//   2. DSV Format: DXGI_FORMAT_D24_UNORM_S8_UINT
-	// we need to create the depth buffer resource with a typeless format.  
 	depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
-
 	depthStencilDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 	depthStencilDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -379,10 +405,8 @@ void SudoGraphics::InitialiseRenderingResources()
 	md3dDevice->CreateDepthStencilView(mDepthStencilTarget.Get(), &dsvDesc, GetDepthStencilView());
 
 	// Transition the resource from its initial state to be used as a depth buffer.
-	D3D12_RESOURCE_BARRIER resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilTarget.Get(),
-		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-
-	mCommandListGraphics->ResourceBarrier(1, &resourceBarrier);
+	mCommandListGraphics->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilTarget.Get(),
+		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
 	// Execute the resize commands.
 	GFX_THROW_INFO(mCommandListGraphics->Close());
@@ -392,18 +416,24 @@ void SudoGraphics::InitialiseRenderingResources()
 	// Wait until resize is complete.
 	FlushCommandQueue();
 
+	//Reset viewport and scissor
+	ResetViewportAndScissorRectangle();
+}
+
+void SudoGraphicsCore::ResetViewportAndScissorRectangle()
+{
 	// Update the viewport transform to cover the client area.
 	mScreenViewport.TopLeftX = 0;
 	mScreenViewport.TopLeftY = 0;
-	mScreenViewport.Width = static_cast<float>(mScreenWidth);
-	mScreenViewport.Height = static_cast<float>(mScreenHeight);
+	mScreenViewport.Width = static_cast<float>(wndWidth);
+	mScreenViewport.Height = static_cast<float>(wndHeight);
 	mScreenViewport.MinDepth = 0.0f;
 	mScreenViewport.MaxDepth = 1.0f;
 
-	mScissorRect = { 0, 0, mScreenWidth, mScreenHeight };
+	mScissorRect = { 0, 0, (int)wndWidth, (int)wndHeight};
 }
 
-void SudoGraphics::CreateCommandObjects()
+void SudoGraphicsCore::CreateCommandObjects()
 {
 	HRESULT hr;
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -428,15 +458,15 @@ void SudoGraphics::CreateCommandObjects()
 	mCommandListGraphics->Close();
 }
 
-void SudoGraphics::CreateSwapChain()
+void SudoGraphicsCore::CreateSwapChain()
 {
 	HRESULT hr;
 	// Release the previous swapchain we will be recreating.
 	mSwapChain.Reset();
 
 	DXGI_SWAP_CHAIN_DESC sd;
-	sd.BufferDesc.Width = mScreenWidth;
-	sd.BufferDesc.Height = mScreenHeight;
+	sd.BufferDesc.Width = wndWidth;
+	sd.BufferDesc.Height = wndHeight;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
 	sd.BufferDesc.Format = mRenderTargetFormat;
@@ -446,7 +476,7 @@ void SudoGraphics::CreateSwapChain()
 	sd.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.BufferCount = SWAPCHAINBUFFERCOUNT;
-	sd.OutputWindow = hWnd;
+	sd.OutputWindow = mhMainWnd;
 	sd.Windowed = true;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -458,7 +488,7 @@ void SudoGraphics::CreateSwapChain()
 		mSwapChain.GetAddressOf()));
 }
 
-void SudoGraphics::FlushCommandQueue()
+void SudoGraphicsCore::FlushCommandQueue()
 {
 	HRESULT hr;
 	// Advance the fence value to mark commands up to this fence point.
@@ -484,7 +514,7 @@ void SudoGraphics::FlushCommandQueue()
 	}
 }
 
-void SudoGraphics::LogAdapters()
+void SudoGraphicsCore::LogAdapters()
 {
 	UINT i = 0;
 	IDXGIAdapter* adapter = nullptr;
@@ -512,7 +542,7 @@ void SudoGraphics::LogAdapters()
 	}
 }
 
-void SudoGraphics::LogAdapterOutputs(IDXGIAdapter* adapter)
+void SudoGraphicsCore::LogAdapterOutputs(IDXGIAdapter* adapter)
 {
 	UINT i = 0;
 	IDXGIOutput* output = nullptr;
@@ -534,7 +564,7 @@ void SudoGraphics::LogAdapterOutputs(IDXGIAdapter* adapter)
 	}
 }
 
-void SudoGraphics::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
+void SudoGraphicsCore::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
 {
 	UINT count = 0;
 	UINT flags = 0;

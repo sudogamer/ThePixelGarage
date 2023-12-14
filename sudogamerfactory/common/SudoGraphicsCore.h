@@ -1,9 +1,10 @@
 #pragma once
 
-#include "SudoWin.h"
-#include "SudoException.h"
-#include "..\D3DHeaders.h"
-#include "DxgiInfoManager.h"
+#include "..\Utils\include\factoryUtils\SudoWin.h"
+#include "..\Utils\include\factoryUtils\SudoException.h"
+#include "..\Utils\include\D3DHeaders.h"
+#include "..\Utils\include\factoryUtils\DxgiInfoManager.h"
+#include "..\Utils\include\factoryUtils\SudoTimer.h"
 
 #if defined(DEBUG) || defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
@@ -15,7 +16,24 @@
 #pragma comment(lib,"dxgi.lib")
 #pragma comment(lib,"d3dcompiler.lib")
 
-class SudoGraphics
+
+// graphics exception checking/throwing macros (some with dxgi infos)
+#define GFX_EXCEPT_NOINFO(hr) SudoGraphicsCore::HrException( __LINE__,__FILE__,(hr) )
+#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw SudoGraphicsCore::HrException( __LINE__,__FILE__,hr )
+
+#ifndef NDEBUG
+#define GFX_EXCEPT(hr) SudoGraphicsCore::HrException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
+#define GFX_THROW_INFO(hrcall) infoManager.Set(); if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr)
+#define GFX_DEVICE_REMOVED_EXCEPT(hr) SudoGraphicsCore::DeviceRemovedException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
+#define GFX_THROW_INFO_ONLY(call) infoManager.Set(); (call); {auto v = infoManager.GetMessages(); if(!v.empty()) {throw SudoGraphicsCore::InfoException( __LINE__,__FILE__,v);}}
+#else
+#define GFX_EXCEPT(hr) SudoGraphicsCore::HrException( __LINE__,__FILE__,(hr) )
+#define GFX_THROW_INFO(hrcall) GFX_THROW_NOINFO(hrcall)
+#define GFX_DEVICE_REMOVED_EXCEPT(hr) SudoGraphicsCore::DeviceRemovedException( __LINE__,__FILE__,(hr) )
+#define GFX_THROW_INFO_ONLY(call) (call)
+#endif
+
+class SudoGraphicsCore
 {
 public:
 	class Exception : public SudoException
@@ -55,28 +73,27 @@ public:
 		std::string reason;
 	};
 public:
-	SudoGraphics( HWND hWnd );
-	SudoGraphics( const SudoGraphics& ) = delete;
-	SudoGraphics& operator=( const SudoGraphics& ) = delete;
-	~SudoGraphics() = default;
-	void EndFrame();
-	void ClearBuffer( float red,float green,float blue ) noexcept;
-	void Draw();
-private:
+	SudoGraphicsCore() = default;
+	SudoGraphicsCore( const SudoGraphicsCore& ) = delete;
+	SudoGraphicsCore& operator=( const SudoGraphicsCore& ) = delete;
+	virtual ~SudoGraphicsCore();
+
+protected:
+	virtual void OnResize();
+	virtual void Update(const SudoTimer& gt);
+	virtual void Draw(const SudoTimer& gt);
+
+//Protected member fields
+protected:
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
 #endif
-
-	//Window
-	HWND hWnd = NULL;
 
 	//D3D12 fields
 	static const int SWAPCHAINBUFFERCOUNT = 2;
 	UINT mRTVDescriptorSize = 0;
 	UINT mDSVDescriptorSize = 0;
 	UINT mCBVDescriptorSize = 0;
-	int mScreenWidth = 800;
-	int mScreenHeight = 600;
 	
 	bool      m4xMsaaState = false;    // 4X MSAA enabled
 	UINT      m4xMsaaQuality = 0;      // quality level of 4X MSAA
@@ -91,7 +108,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Device> md3dDevice;
 	
 	Microsoft::WRL::ComPtr<ID3D12Fence> mFence;
-	UINT64 mCurrentFence = 0;
+	UINT64 mCurrentFence;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mCommandAllocator;
@@ -99,7 +116,7 @@ private:
 
 	//Resources & Descriptor Heaps. RenderTaget and DepthStencilTargets
 	Microsoft::WRL::ComPtr<ID3D12Resource> mRenderTargets[SWAPCHAINBUFFERCOUNT];
-	int mCurrentBackBufferIndex = 0;
+	int mCurrentBackBufferIndex;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilTarget;
 	
@@ -110,7 +127,22 @@ private:
 	D3D12_VIEWPORT mScreenViewport;
 	D3D12_RECT mScissorRect;
 
+	HWND      mhMainWnd = nullptr; // main window handle
+	bool      mAppPaused = false;  // is the application paused?
+	bool      mMinimized = false;  // is the application minimized?
+	bool      mMaximized = false;  // is the application maximized?
+	bool      mResizing = false;   // are the resize bars being dragged?
+	bool      mFullscreenState = false;// fullscreen enabled
+	unsigned int wndWidth;
+	unsigned int wndHeight;
+	float clearColor[4];
+
+	// Used to keep track of the “delta-time” and game time (§4.4).
+	SudoTimer mTimer;
+
+//Protected member funcitons
 protected :
+	void InitializeSudoGraphicsCore(HWND hWnd, unsigned int wndWidth, unsigned int wndHeight);
 	bool InitDirect3D12();
 	void CreateCommandObjects();
 	void CreateSwapChain();
@@ -118,8 +150,12 @@ protected :
 	void LogAdapters();
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
+	void ResetViewportAndScissorRectangle();
 	void CreateRtvAndDsvDescriptorHeaps();
-	void InitialiseRenderingResources();
+	void EndFrame();
+
+	void SetClearColor(float color[]);
+	void CalculateFrameStats(std::string* fps, std::string* frameTime);
 
 	ID3D12Resource* GetCurrentBackBuffer()const
 	{

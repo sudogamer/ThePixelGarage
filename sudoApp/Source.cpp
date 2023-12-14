@@ -1,15 +1,20 @@
 #include "header/SudoApp.h"
 #include <tchar.h>
+#include <filesystem>
+#include <shlobj.h>
+
 int CALLBACK WinMain(
 	HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPSTR     lpCmdLine,
 	int       nCmdShow)
 {
-
+	unsigned winWidth = 1920;
+	unsigned winHeight = 1080;
 	try
 	{
-		return SudoApp{}.Go();
+		SudoApp appInstance(winWidth, winHeight);
+		return appInstance.Go();
 	}
 	catch (const SudoException& e)
 	{

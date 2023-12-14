@@ -13,7 +13,7 @@ Window::WindowClass::WindowClass() noexcept
 {
 	WNDCLASSEX wc = { 0 };
 	wc.cbSize = sizeof( wc );
-	wc.style = CS_OWNDC;
+	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = HandleMsgSetup;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
@@ -50,7 +50,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 
 
 // Window Stuff
-Window::Window( int width,int height,const char* name )
+Window::Window( int width,int height,const char* title )
 	:
 	width( width ),
 	height( height )
@@ -67,7 +67,7 @@ Window::Window( int width,int height,const char* name )
 	}
 	// create window & get hWnd
 	hWnd = CreateWindow(
-		WindowClass::GetName(),name,
+		WindowClass::GetName(), title,
 		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 		CW_USEDEFAULT,CW_USEDEFAULT,wr.right - wr.left,wr.bottom - wr.top,
 		nullptr,nullptr,WindowClass::GetInstance(),this
@@ -81,8 +81,7 @@ Window::Window( int width,int height,const char* name )
 	ShowWindow( hWnd,SW_SHOWDEFAULT );
 	UpdateWindow(hWnd);
 
-	// create graphics object
-	pGfx = std::make_unique<SudoGraphics>(hWnd);
+	this->windowTitle = title;
 }
 
 Window::~Window()
@@ -92,10 +91,18 @@ Window::~Window()
 
 void Window::SetTitle( const std::string& title )
 {
+	this->windowTitle = title;
 	if( SetWindowText( hWnd,title.c_str() ) == 0 )
 	{
 		throw CHWND_LAST_EXCEPT();
 	}
+}
+
+void Window::SetPerformanceCounterOnWindow(const std::string& fps, const std::string& frameTime)
+{
+	string windowText = windowTitle + "    fps: " + fps + "   mspf: " + frameTime;
+
+	SetWindowText(getWindowHandle(), windowText.c_str());
 }
 
 std::optional<int> Window::ProcessMessages() noexcept
@@ -120,13 +127,9 @@ std::optional<int> Window::ProcessMessages() noexcept
 	return {};
 }
 
-SudoGraphics& Window::Gfx()
+HWND& Window::getWindowHandle()
 {
-	if( !pGfx )
-	{
-		throw CHWND_NOGFX_EXCEPT();
-	}
-	return *pGfx;
+	return hWnd;
 }
 
 LRESULT CALLBACK Window::HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept
@@ -179,7 +182,6 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 			kbd.OnKeyPressed( static_cast<unsigned char>(wParam) );
 		}
 		break;
-	case WM_KEYUP:
 	case WM_SYSKEYUP:
 		kbd.OnKeyReleased( static_cast<unsigned char>(wParam) );
 		break;

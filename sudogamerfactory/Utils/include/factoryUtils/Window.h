@@ -4,9 +4,9 @@
 #include "SudoException.h"
 #include "Keyboard.h"
 #include "Mouse.h"
-#include "SudoGraphics.h"
 #include <optional>
 #include <memory>
+#include "SudoTimer.h"
 using namespace std;
 class Window
 {
@@ -56,8 +56,9 @@ public:
 	Window( const Window& ) = delete;
 	Window& operator=( const Window& ) = delete;
 	void SetTitle( const std::string& title );
+	void SetPerformanceCounterOnWindow(const std::string& fps, const std::string& frameTime);
 	static std::optional<int> ProcessMessages() noexcept;
-	SudoGraphics& Gfx();
+	HWND& getWindowHandle();
 private:
 	static LRESULT CALLBACK HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
 	static LRESULT CALLBACK HandleMsgThunk( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
@@ -69,7 +70,8 @@ private:
 	int width;
 	int height;
 	HWND hWnd;
-	std::unique_ptr<SudoGraphics> pGfx;
+	string windowTitle;
+	SudoTimer mTimer;
 };
 
 

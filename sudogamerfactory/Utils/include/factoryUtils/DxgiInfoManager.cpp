@@ -1,12 +1,12 @@
 #include "DxgiInfoManager.h"
 #include "Window.h"
-#include "SudoGraphics.h"
+#include "..\..\..\common\SudoGraphicsCore.h"
 #include <dxgidebug.h>
 #include <memory>
 
 #pragma comment(lib, "dxguid.lib")
 
-#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw SudoGraphics::HrException( __LINE__,__FILE__,hr )
+#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw SudoGraphicsCore::HrException( __LINE__,__FILE__,hr )
 
 DxgiInfoManager::DxgiInfoManager()
 {
